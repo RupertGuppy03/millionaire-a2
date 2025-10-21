@@ -27,3 +27,4 @@ Thumbs.db
 *.mov
 
 # Keep data/ tracked for questions/seeding (no ignore rule needed)
+*.pdf
