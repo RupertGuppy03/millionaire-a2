@@ -1,0 +1,10 @@
+name,score
+Rupert|32000
+Rupert|1000
+Rupert|0
+Rupert|1000
+Rupert|0
+Rupert|1000000
+Rupert|1000
+Rueprt|0
+Rg|0

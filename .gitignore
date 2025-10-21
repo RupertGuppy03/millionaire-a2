@@ -1,0 +1,29 @@
+# Maven build output
+/target/
+*.class
+*.log
+
+# Derby (embedded DB) — ignore in Git, but include db/ in your final submission ZIP
+/db/
+derby.log
+
+# NetBeans project files (safe to ignore)
+nbactions.xml
+nbactions-*.xml
+/nbproject/private/
+nb-configuration.xml
+
+# IDE noise (in case you open elsewhere)
+/.idea/
+/.vscode/
+*.iml
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Large media (keep out of GitHub; include in submission ZIP if required)
+*.mp4
+*.mov
+
+# Keep data/ tracked for questions/seeding (no ignore rule needed)
