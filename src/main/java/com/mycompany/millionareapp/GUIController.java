@@ -4,6 +4,9 @@
  */
 package com.mycompany.millionareapp;
 
+import java.time.Instant;
+import javax.swing.JOptionPane;
+
 // these imports have errors
 
 /*import com.mycompany.millionareapp.ui.GameUI;
@@ -87,34 +90,100 @@ public class GUIController {
     }
 
     public void start() {
-        // TODO: wire UI listeners -> methods below; ui.showMenu();
+        // Menu listeners
+        ui.onStart(e -> beginNewGame(ui.getPlayerName()));
+        ui.onLeaderboard(e -> showLeaderboard());
+        ui.onQuit(e -> System.exit(0));
+        // Game listeners
+        ui.onAnswer(0, e -> submitAnswer(0));
+        ui.onAnswer(1, e -> submitAnswer(1));
+        ui.onAnswer(2, e -> submitAnswer(2));
+        ui.onAnswer(3, e -> submitAnswer(3));
+        ui.onFifty(e -> useFiftyFifty());
+        ui.onReveal(e -> useReveal());
+        ui.onBack(e -> backToMenu());
+        // Default screen
     }
 
     public void beginNewGame(String playerName) {
-        // TODO: playerId = repo.ensurePlayer(playerName);
-        // TODO: sessionId = repo.startSession(playerId); startedAt = Instant.now();
-        // TODO: engine.resetWithQuestions(repo.findAllQuestions());
-        // TODO: ui.showGame(); refreshQuestionView();
+        if (playerName == null || playerName.isBlank()) {
+            JOptionPane.showMessageDialog(ui, "Please enter a player name.", "Invalid name",
+            JOptionPane.WARNING_MESSAGE);
+
+            return;           
+        }
+        
+        try{
+            playerId = repo.ensurePlayer(playerName);
+            sessionId = repo.startSession(playerId);
+            startedAt = Instant.now();     
+        } catch(UnsupportedOperationException ex) {
+            playerId = -1L;
+            sessionId = -1L;
+            startedAt = Instant.now();
+            
+        } catch(Exception ex){
+            JOptionPane.showMessageDialog(ui,
+                    "Could not start session:\n" + ex.getMessage(),
+                    "Database Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Show the game screen
+        ui.setTierText("Tier: $0");
+        ui.setQuestionText("Q1 will appear here once the engine is connected.");
+        ui.setOption(0, "Option A");
+        ui.setOption(1, "Option B");
+        ui.setOption(2, "Option C");
+        ui.setOption(3, "Option D");
+        ui.enableLifeline("50/50", true);
+        ui.enableLifeline("REVEAL", true);
+
+        ui.showGame();
     }
 
     public void submitAnswer(int optionIndex) {
         // TODO: call engine.answer(...); if game over -> repo.finishSession(...); ui.showSummary(...); else refreshQuestionView();
+        JOptionPane.showMessageDialog(ui,
+                "You chose option " + ("ABCD".charAt(optionIndex)) + ".\n" +
+                "Answer handling will be enabled after engine wiring.",
+                "Answer Selected", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public void useFiftyFifty() {
         // TODO: engine.useFiftyFifty(); repo.recordLifelineUse(sessionId, "50/50", /*questionId*/0); refreshQuestionView();
+        ui.enableLifeline("50/50", false);
+        JOptionPane.showMessageDialog(ui,
+                "50/50 lifeline will be applied after engine wiring.",
+                "Lifeline", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public void useReveal() {
         // TODO: engine.useReveal(); repo.recordLifelineUse(sessionId, "REVEAL", /*questionId*/0); refreshQuestionView();
+        ui.enableLifeline("REVEAL", false);
+        JOptionPane.showMessageDialog(ui,
+                "Reveal lifeline will show the correct answer after engine wiring.",
+                "Lifeline", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public void showLeaderboard() {
         // TODO: List<Object[]> rows = repo.topSessions(20); ui.setLeaderboardRows(rows); ui.showLeaderboard();
+        try {
+            ui.setLeaderboardRows(repo.topSessions(20));
+        } catch (UnsupportedOperationException ex) {
+            // Before repo.topSessions is implemented, show empty table gracefully
+            ui.setLeaderboardRows(java.util.Collections.emptyList());
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(ui,
+                    "Could not load leaderboard:\n" + ex.getMessage(),
+                    "Database Error", JOptionPane.ERROR_MESSAGE);
+            ui.setLeaderboardRows(java.util.Collections.emptyList());
+        }
+        ui.showLeaderboard();
     }
 
     public void backToMenu() {
-        // TODO: ui.showMenu();
+        ui.showMenu();
     }
 
     private void refreshQuestionView() {

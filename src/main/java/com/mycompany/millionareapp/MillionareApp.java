@@ -37,26 +37,18 @@ import java.nio.file.Paths;
 public class MillionareApp {
 
     public static void main(String[] args) {
-        // getting file path to the questions.txt file
-        Path path = Paths.get("data", "questions.txt");
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            // DB repo (Derby Embedded); safe even if methods are still TODO
+            GameRepository repo = new GameRepository("db/MillionaireDB");
+            repo.ensureSchema(); // creates tables if missing
 
-        // Load questions from file
-        FileQuestionRepository repo = new FileQuestionRepository(path);
-        
-        QuestionBank bank;
-        try {
-            bank = repo.loadAll();  
-            System.out.println("Loaded questions: " + bank.size());
-        } catch (Exception e) {        // IOException or IllegalArgumentException → friendly message
-            System.err.println("Failed to load questions.txt: " + e.getMessage());
-            return; // bail to avoid NPEs later
-        }
+            GameEngine engine = null; // not used yet (placeholders in GUIController)
+            GameUI ui = new GameUI();
 
-
-        // these classes handle the game logic and ensure that the game runs smoothly
-        GameEngine engine = new GameEngine(bank);
-        GamePersistance gp = new GamePersistance();
-        new GameController(engine, gp).run();
+            GUIController controller = new GUIController(ui, engine, repo);
+            controller.start();      // hooks up all listeners, shows Menu
+            ui.setVisible(true);     // display the window
+        });
             
     }
 }
