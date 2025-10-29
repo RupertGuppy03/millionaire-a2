@@ -57,19 +57,60 @@ public class GameUI extends JFrame {
     public void onQuit(ActionListener l)        { menuCard.onQuit(l); }
 
     // -------- Game API --------
-    public void setTierText(String text)                { gameCard.setTierText(text); }
-    public void setQuestionText(String text)            { gameCard.setQuestionText(text); }
-    public void setOption(int idx, String text)         { gameCard.setOption(idx, text); }
-    public void enableLifeline(String name, boolean on) { gameCard.enableLifeline(name, on); }
-    public void showSummary(String text)                { gameCard.showSummary(text); }
-    public void onAnswer(int idx, ActionListener l)     { gameCard.onAnswer(idx, l); }
-    public void onFifty(ActionListener l)               { gameCard.onFifty(l); }
-    public void onReveal(ActionListener l)              { gameCard.onReveal(l); }
-    public void onBack(ActionListener l)                { gameCard.onBack(l); }
+    public void setTierText(String text) {
+        gameCard.setTierText(text);
+    }
+
+    public void setQuestionText(String text) {
+        gameCard.setQuestionText(text);
+    }
+
+    public void setOption(int idx, String text) {
+        gameCard.setOption(idx, text);
+    }
+
+    public void enableLifeline(String name, boolean on) {
+        gameCard.enableLifeline(name, on);
+    }
+
+    public void showSummary(String text) {
+        gameCard.showSummary(text);
+    }
+
+    public void onAnswer(int idx, ActionListener l) {
+        gameCard.onAnswer(idx, l);
+    }
+
+    public void onFifty(ActionListener l) {
+        gameCard.onFifty(l);
+    }
+
+    public void onReveal(ActionListener l) {
+        gameCard.onReveal(l);
+    }
+
+    public void onBack(ActionListener l) {
+        gameCard.onBack(l);
+    }
+
+    public void hideOption(int idx) {
+        gameCard.hideOption(idx);
+    }
+
+    public void enableOption(int idx, boolean on) {
+        gameCard.enableOption(idx, on);
+    }
+
+    public void resetOptionsEnabled() {
+        gameCard.resetOptionsEnabled();
+    }
+
 
     // -------- Leaderboard API --------
     public void setLeaderboardRows(List<Object[]> rows) { leaderboardCard.setRows(rows); }
     public void onLeaderboardBack(ActionListener l)     { leaderboardCard.onBack(l); }
+    
+    
 
     // ===================== Inner Panels =====================
 
@@ -154,6 +195,31 @@ public class GameUI extends JFrame {
         void setOption(int idx, String text)  {
             if (idx >= 0 && idx < answerButtons.length) answerButtons[idx].setText(text != null ? text : "");
         }
+        
+        // Hide/disable a single option (used by 50/50 and Reveal)
+        void hideOption(int idx) {
+            if (idx >= 0 && idx < answerButtons.length) {
+                answerButtons[idx].setText("—");
+                answerButtons[idx].setEnabled(false);
+            }
+        }
+
+// Enable/disable a single option
+        void enableOption(int idx, boolean on) {
+            if (idx >= 0 && idx < answerButtons.length) {
+                answerButtons[idx].setEnabled(on);
+            }
+        }
+
+// Re-enable all options (call this when a new question loads)
+        void resetOptionsEnabled() {
+            for (JButton b : answerButtons) {
+                b.setEnabled(true);
+            }
+        }
+
+        
+        
         void enableLifeline(String name, boolean on) {
             if (name == null) return;
             if ("50/50".equalsIgnoreCase(name)) fiftyButton.setEnabled(on);

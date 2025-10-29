@@ -238,15 +238,123 @@ public class GameRepository {
     }
     
     // ------- API to implement in later steps -------
-    public List<Question> findAllQuestions() { throw new UnsupportedOperationException("TODO"); }
-    public long ensurePlayer(String name) { throw new UnsupportedOperationException("TODO"); }
-    public long startSession(long playerId) { throw new UnsupportedOperationException("TODO"); }
-    public void finishSession(long sessionId, int winnings, long elapsedSeconds, java.time.Instant finishedAt) { throw new UnsupportedOperationException("TODO"); }
-    public void recordLifelineUse(long sessionId, String lifelineName, long questionId) { throw new UnsupportedOperationException("TODO"); }
-    public List<Object[]> topSessions(int limit) { throw new UnsupportedOperationException("TODO"); }
+    public List<Question> findAllQuestions() {
+        try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(
+                "SELECT STEM, OPTA, OPTB, OPTC, OPTD, CORRECT "
+                + "FROM QUESTION ORDER BY ID ASC")) {
+            try (ResultSet rs = ps.executeQuery()) {
+                java.util.ArrayList<Question> out = new java.util.ArrayList<>();
+                while (rs.next()) {
+                    String stem = rs.getString(1);
+                    String a = rs.getString(2);
+                    String b = rs.getString(3);
+                    String c = rs.getString(4);
+                    String d = rs.getString(5);
+                    int correct = rs.getInt(6);
+                    out.add(Question.of(stem, a, b, c, d, correct));
+                }
+                return out;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("findAllQuestions failed", e);
+        }
+    }
+
+    public long ensurePlayer(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Player name required");
+        }
+        String trimmed = name.trim();
+
+        try (Connection cn = getConnection()) {
+            // 1) try select
+            try (PreparedStatement sel = cn.prepareStatement(
+                    "SELECT ID FROM PLAYER WHERE NAME = ?")) {
+                sel.setString(1, trimmed);
+                try (ResultSet rs = sel.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getLong(1);
+                    }
+                }
+            }
+            // 2) insert
+            try (PreparedStatement ins = cn.prepareStatement(
+                    "INSERT INTO PLAYER (NAME) VALUES (?)",
+                    PreparedStatement.RETURN_GENERATED_KEYS)) {
+                ins.setString(1, trimmed);
+                ins.executeUpdate();
+                try (ResultSet keys = ins.getGeneratedKeys()) {
+                    if (keys.next()) {
+                        return keys.getLong(1);
+                    }
+                }
+            }
+            throw new IllegalStateException("ensurePlayer: no key returned");
+        } catch (SQLException e) {
+            throw new IllegalStateException("ensurePlayer failed", e);
+        }
+
+    }
+    public long startSession(long playerId) {
+
+        try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(
+                "INSERT INTO GAME_SESSION (PLAYER_ID) VALUES (?)",
+                PreparedStatement.RETURN_GENERATED_KEYS)) {
+            ps.setLong(1, playerId);
+            ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return keys.getLong(1);
+                }
+            }
+            throw new IllegalStateException("startSession: no key returned");
+        } catch (SQLException e) {
+            throw new IllegalStateException("startSession failed", e);
+        }
+    }
+    public void finishSession(long sessionId, int winnings, long elapsedSeconds, java.time.Instant finishedAt) {
+        try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(
+                "UPDATE GAME_SESSION SET WINNINGS=?, ELAPSED_SECONDS=?, FINISHED_AT=? WHERE ID=?")) {
+            ps.setInt(1, winnings);
+            ps.setLong(2, elapsedSeconds);
+            ps.setTimestamp(3, java.sql.Timestamp.from(finishedAt));
+            ps.setLong(4, sessionId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new IllegalStateException("finishSession failed", e);
+        }
+    }
+    
+    public List<Object[]> topSessions(int limit) {
+        java.util.ArrayList<Object[]> rows = new java.util.ArrayList<>();
+        try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(
+                "SELECT P.NAME, S.WINNINGS, S.FINISHED_AT "
+                + "FROM GAME_SESSION S JOIN PLAYER P ON P.ID = S.PLAYER_ID "
+                + "WHERE S.FINISHED_AT IS NOT NULL "
+                + "ORDER BY S.WINNINGS DESC, S.FINISHED_AT DESC")) {
+            try (ResultSet rs = ps.executeQuery()) {
+                int count = 0;
+                while (rs.next() && count < Math.max(1, limit)) {
+                    String player = rs.getString(1);
+                    Integer win = rs.getInt(2);
+                    java.sql.Timestamp ts = rs.getTimestamp(3);
+                    rows.add(new Object[]{player, win, ts});
+                    count++;
+                }
+            }
+            return rows;
+        } catch (SQLException e) {
+            throw new IllegalStateException("topSessions failed", e);
+        }
+        
+        
+    }
     
     
+      
 }
+
+
     
 
     

@@ -42,6 +42,22 @@ public class MillionareApp {
             GameRepository repo = new GameRepository("db/MillionaireDB");
             repo.ensureSchema(); // creates tables if missing
 
+            try {
+                java.nio.file.Path path = java.nio.file.Paths.get("data", "questions.txt");
+                FileQuestionRepository fileRepo = new FileQuestionRepository(path);
+                QuestionBank bank = fileRepo.loadAll();
+                java.util.List<Question> starter = new java.util.ArrayList<>();
+                for (int i = 1; i <= bank.size(); i++) {
+                    starter.add(bank.getByNumber(i));
+                }
+                int inserted = repo.seedIfEmpty(starter);
+                if (inserted > 0) {
+                    System.out.println("Seeded " + inserted + " questions.");
+                }
+            } catch (Exception ignore) {
+                // keep GUI usable even if seeding fails; leaderboard and gameplay just won't work until data exists
+            }
+
             GameEngine engine = null; // not used yet (placeholders in GUIController)
             GameUI ui = new GameUI();
 
@@ -49,7 +65,7 @@ public class MillionareApp {
             controller.start();      // hooks up all listeners, shows Menu
             ui.setVisible(true);     // display the window
         });
-            
+
     }
 }
 

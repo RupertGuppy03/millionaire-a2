@@ -28,3 +28,4 @@ Thumbs.db
 
 # Keep data/ tracked for questions/seeding (no ignore rule needed)
 *.pdf
+/nbproject/

@@ -107,6 +107,9 @@ public class GUIController {
         ui.onBack(e -> backToMenu());
         // Default screen
         ui.showMenu();
+        // leaderboard back button
+        ui.onLeaderboardBack(e -> backToMenu());
+
     }
 
     public void beginNewGame(String playerName) {
@@ -180,9 +183,8 @@ public class GUIController {
             return;
         }
         int[] hide = engine.useFiftyFiftyLifeLine(state); // <- your engine + strategy do the work
-        for (int idx : hide) {
-            ui.setOption(idx, "—");      // <- UI-only presentation
-        }
+            for (int idx : hide) ui.hideOption(idx);
+
         ui.enableLifeline("50/50", false);
     }
 
@@ -190,11 +192,18 @@ public class GUIController {
         if (engine == null || state == null) {
             return;
         }
-        int correctIdx = engine.revealCorrectAnswer(state); // <- engine + LifeLine decide
+
+        int correctIdx = engine.revealCorrectAnswer(state); // engine enforces once-only
         if (correctIdx >= 0) {
-            ui.setOption(correctIdx, "[Correct]"); // <- simple UI marker
+        // Hide every incorrect option
+        for (int i = 0; i < 4; i++) {
+            if (i != correctIdx) ui.hideOption(i);
         }
+        // Label the correct option and keep it enabled
+        ui.setOption(correctIdx, "[Correct]");
+        ui.enableOption(correctIdx, true);
         ui.enableLifeline("REVEAL", false);
+    }
     }
 
     public void showLeaderboard() {
@@ -218,6 +227,9 @@ public class GUIController {
     }
 
     private void refreshQuestionView() {
+        
+        ui.resetOptionsEnabled();
+
 
         Question q = engine.getCurrentQuestion(state);
         if (q == null) {
