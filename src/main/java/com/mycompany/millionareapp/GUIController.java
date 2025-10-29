@@ -5,7 +5,10 @@
 package com.mycompany.millionareapp;
 
 import java.time.Instant;
+import java.util.List;
 import javax.swing.JOptionPane;
+import java.time.Duration;
+
 
 // these imports have errors
 
@@ -76,7 +79,7 @@ import java.util.List;
 
 public class GUIController {
     private final GameUI ui;
-    private final GameEngine engine;
+    private GameEngine engine;
     private final GameRepository repo;
     private GameState state;
     private long playerId = -1L;
@@ -103,6 +106,7 @@ public class GUIController {
         ui.onReveal(e -> useReveal());
         ui.onBack(e -> backToMenu());
         // Default screen
+        ui.showMenu();
     }
 
     public void beginNewGame(String playerName) {
@@ -116,12 +120,24 @@ public class GUIController {
         try{
             playerId = repo.ensurePlayer(playerName);
             sessionId = repo.startSession(playerId);
-            startedAt = Instant.now();     
-        } catch(UnsupportedOperationException ex) {
-            playerId = -1L;
-            sessionId = -1L;
-            startedAt = Instant.now();
+            startedAt = Instant.now();  
             
+            List<Question> questions = repo.findAllQuestions();
+                        
+            if(questions.isEmpty()){
+                ui.setQuestionText("No questions in database");
+                return;
+            } 
+            
+            QuestionBank bank = new QuestionBank();
+            for (Question q : questions) bank.add(q);
+            
+            this.engine = new GameEngine(bank);
+            this.state = this.engine.startGame(playerName);
+            
+            refreshQuestionView();           
+            ui.showGame();
+                
         } catch(Exception ex){
             JOptionPane.showMessageDialog(ui,
                     "Could not start session:\n" + ex.getMessage(),
@@ -129,41 +145,56 @@ public class GUIController {
             return;
         }
         
-        // Show the game screen
-        ui.setTierText("Tier: $0");
-        ui.setQuestionText("Q1 will appear here once the engine is connected.");
-        ui.setOption(0, "Option A");
-        ui.setOption(1, "Option B");
-        ui.setOption(2, "Option C");
-        ui.setOption(3, "Option D");
-        ui.enableLifeline("50/50", true);
-        ui.enableLifeline("REVEAL", true);
-
-        ui.showGame();
     }
 
     public void submitAnswer(int optionIndex) {
-        // TODO: call engine.answer(...); if game over -> repo.finishSession(...); ui.showSummary(...); else refreshQuestionView();
-        JOptionPane.showMessageDialog(ui,
-                "You chose option " + ("ABCD".charAt(optionIndex)) + ".\n" +
-                "Answer handling will be enabled after engine wiring.",
-                "Answer Selected", JOptionPane.INFORMATION_MESSAGE);
+        if (engine == null || state == null) return;
+
+        try {
+            engine.answer(state, optionIndex);
+
+            if (engine.gameIsOver(state)) {
+                int  winnings = engine.currentPrizeGet(state);
+                long elapsed  = Duration.between(startedAt, Instant.now()).getSeconds();
+                try {
+                    repo.finishSession(sessionId, winnings, elapsed, Instant.now());
+                } catch (Exception ignore) {
+                    // If finishing fails, still show result; robustness first.
+                }
+                ui.showSummary("Game over! You won $" + winnings);
+                return;
+            }
+
+            // Continue to next question
+            refreshQuestionView();
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(ui,
+                    "Could not process the answer:\n" + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     public void useFiftyFifty() {
-        // TODO: engine.useFiftyFifty(); repo.recordLifelineUse(sessionId, "50/50", /*questionId*/0); refreshQuestionView();
+        if (engine == null || state == null) {
+            return;
+        }
+        int[] hide = engine.useFiftyFiftyLifeLine(state); // <- your engine + strategy do the work
+        for (int idx : hide) {
+            ui.setOption(idx, "—");      // <- UI-only presentation
+        }
         ui.enableLifeline("50/50", false);
-        JOptionPane.showMessageDialog(ui,
-                "50/50 lifeline will be applied after engine wiring.",
-                "Lifeline", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public void useReveal() {
-        // TODO: engine.useReveal(); repo.recordLifelineUse(sessionId, "REVEAL", /*questionId*/0); refreshQuestionView();
+        if (engine == null || state == null) {
+            return;
+        }
+        int correctIdx = engine.revealCorrectAnswer(state); // <- engine + LifeLine decide
+        if (correctIdx >= 0) {
+            ui.setOption(correctIdx, "[Correct]"); // <- simple UI marker
+        }
         ui.enableLifeline("REVEAL", false);
-        JOptionPane.showMessageDialog(ui,
-                "Reveal lifeline will show the correct answer after engine wiring.",
-                "Lifeline", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public void showLeaderboard() {
@@ -187,6 +218,27 @@ public class GUIController {
     }
 
     private void refreshQuestionView() {
-        // TODO: pull question/tier/flags from engine+state and call ui.setQuestionText/setOption/... etc.
+
+        Question q = engine.getCurrentQuestion(state);
+        if (q == null) {
+            // Defensive: if something went off, end gracefully.
+            ui.showSummary("No more questions.");
+            return;
+        }
+        ui.setQuestionText(q.getQuestion());
+        ui.setOption(0, q.getOption(0).toString());
+        ui.setOption(1, q.getOption(1).toString());
+        ui.setOption(2, q.getOption(2).toString());
+        ui.setOption(3, q.getOption(3).toString());
+
+        int prize = engine.currentPrizeGet(state);
+        ui.setTierText("Tier: $" + prize);
+
+        // Lifeline availability from GameState flags (engine enforces once-only)
+        boolean used5050 = state.hasUsed5050();
+        boolean usedRev = state.hasUsedLifeline();
+        ui.enableLifeline("50/50", !used5050);
+        ui.enableLifeline("REVEAL", !usedRev);
+
     }
 }
