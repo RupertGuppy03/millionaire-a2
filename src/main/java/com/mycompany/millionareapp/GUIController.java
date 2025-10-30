@@ -10,17 +10,6 @@ import javax.swing.JOptionPane;
 import java.time.Duration;
 
 
-// these imports have errors
-
-/*import com.mycompany.millionareapp.ui.GameUI;
-import com.mycompany.millionareapp.engine.GameEngine;
-import com.mycompany.millionareapp.model.GameState;
-import com.mycompany.millionareapp.persistence.GameRepository;
-
-import java.time.Instant;
-import java.util.List;
-*/
-
 /**
  *
  * @author rupertguppy
