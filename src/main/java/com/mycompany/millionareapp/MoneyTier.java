@@ -17,14 +17,6 @@ package com.mycompany.millionareapp;
  * check if a step is safe, and work out payouts for losing or walking away.
 */
 
-/**
- * PRIZE LADDER & SAFE TIERS.
- * What to change/confirm:
- *  - Provide static helpers used by GUI/engine: prizeForQuestion(int), isSafeTier(int),
- *    guaranteedPrizeFor(int) (last achieved safe tier).
- *  - Keep mapping deterministic and side-effect free.
- */
-
 public enum MoneyTier {
     
     Q1(1, 100, false),

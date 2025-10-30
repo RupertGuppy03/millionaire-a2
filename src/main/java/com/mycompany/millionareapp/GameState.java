@@ -12,15 +12,6 @@ package com.mycompany.millionareapp;
  * understand where the game is at while keeping track of all aspects of the game
  */
 
-/**
- * GAME SESSION STATE (owned by GameEngine).
- * What to change:
- *  - Add DB/session fields: playerId, sessionId, startedAt (Instant).
- *  - Add lifeline flags: usedFiftyFifty, usedReveal (+ getters/setters).
- *  - Add resetForNewGame(playerId, sessionId): clears counters, sets timestamps.
- *  - Keep all mutations encapsulated; GUIController reads state via GameEngine APIs.
- */
-
 
 public class GameState {
     

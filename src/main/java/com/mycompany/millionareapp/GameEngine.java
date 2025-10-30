@@ -17,17 +17,6 @@ package com.mycompany.millionareapp;
   - No printing here — just pure logic. The controller/UI handles all text.
  */
 
-
-/**
- * DOMAIN LOGIC ONLY (no UI/DB).
- * What to change:
- *  - Add/resetWithQuestions(List<Question>) to accept DB-loaded questions.
- *  - Expose GUI-friendly API: getCurrentQuestion(), getCurrentQuestionNumber(), answer(int),
- *    isGameOver(), isWon(), getCurrentPrize().
- *  - Implement lifelines via state flags: useFiftyFifty() / useReveal() return indices; one-time use enforced.
- *  - Use MoneyTier for prize/guaranteed tiers; do not print to console here.
- */
-
 public class GameEngine {
     
     private final QuestionBank questionBank;

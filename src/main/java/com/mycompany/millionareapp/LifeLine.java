@@ -13,14 +13,6 @@ package com.mycompany.millionareapp;
  * once peer game
  */
 
-/**
- * LIFELINE CONTRACT.
- * What to change/confirm:
- *  - Method signature: String getName(); int[] apply(Question q).
- *  - Semantics: return indices affected (two to hide for 50/50; one correct for Reveal).
- *  - No state mutation here; GameEngine/Gamestate enforces one-time use.
- */
-
 
 public class LifeLine {
     

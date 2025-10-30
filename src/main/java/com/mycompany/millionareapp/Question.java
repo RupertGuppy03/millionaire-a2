@@ -16,17 +16,6 @@ import java.util.List;
  * that there are exactly for answers with only one correct option between a range of 0-3. it validates the four
  * non-null options in the constructor and provides simple get, correctness check and to string methods
  */
-
-/**
- * QUESTION ENTITY (DB-aware).
- * What to change:
- *  - Add a long id field (DB primary key) with getter/setter (defaults to -1 if unknown).
- *  - Keep validation: exactly 4 options; valid correct index; non-empty stem.
- *  - (Optional) Include category/difficulty if present in your file format.
- */
-
-// Do this class yourself with minimal chatGPT help
-
 public final class Question {
 
     

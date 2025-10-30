@@ -40,15 +40,6 @@ import java.util.ArrayList;
  *     - On end: show final winnings; ask persistence to record high score.
  */
 
-
-/**
- * LEGACY CLI CONTROLLER.
- * What to change:
- *  - Mark as legacy/fallback; not used by default in Assignment 2.
- *  - Optionally delegate any reusable logic to GameEngine (pure domain logic).
- *  - No DB or GUI code should be added here.
- */
-
 public class GameController {
     
     private final GameEngine engine;
@@ -81,7 +72,7 @@ public class GameController {
             }
         }
     }
-    // thios method is for starting a new game
+    // this method is for starting a new game
     public void startNewGame(){
         System.out.print("Enter a player name ['q' to quit]: ");
         String playerName = input.nextLine().trim();

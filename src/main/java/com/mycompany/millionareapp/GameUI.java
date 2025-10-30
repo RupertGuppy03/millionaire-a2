@@ -7,17 +7,13 @@ import java.awt.event.ActionListener;
 import java.util.List;
 
 /**
- * GameUI — Single-window Swing UI (CardLayout; inner screens). Swing/AWT only.
- * Pure view: no business logic. GUIController attaches all listeners.
- *
- * Screens: MENU, GAME, LEADERBOARD
- * Public API:
- *  - Navigation: showMenu(), showGame(), showLeaderboard()
- *  - Menu: getPlayerName(), onStart(...), onLeaderboard(...), onQuit(...)
- *  - Game: setTierText(...), setQuestionText(...), setOption(i,...),
- *          enableLifeline(name,boolean), showSummary(...),
- *          onAnswer(i,...), onFifty(...), onReveal(...), onBack(...)
- *  - Leaderboard: setLeaderboardRows(List<Object[]>), onLeaderboardBack(...)
+ * 
+ * Chat GPT helped with 40% of this class
+ * GameUI is the top-level UI window for the Millionaire game.
+ * Uses a CardLayout to swap three screens: MENU, GAME, and LEADERBOARD.
+ * It also builds and styles Swing components howver has no actual game logic here.
+ * Exposes a small API so GUIController can read inputs, set texts/states,
+ * and register listeners for buttons and lifelines.
  */
 public class GameUI extends JFrame {
 
@@ -32,7 +28,13 @@ public class GameUI extends JFrame {
     private final MenuCard menuCard = new MenuCard();
     private final GameCard gameCard = new GameCard();
     private final LeaderboardCard leaderboardCard = new LeaderboardCard();
-
+    
+    // yellow and blue theme for game
+    private static final Color colLightBlue = new Color(225, 242, 255);
+    private static final Color colYellow = new Color(255, 225, 0);
+    private static final Color colBlack = new Color (0, 0, 0);
+    
+    // game UI constructor for menu screen
     public GameUI() {
         super("Who Wants to Be a Millionaire");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -43,20 +45,41 @@ public class GameUI extends JFrame {
         root.add(gameCard, screenGame);
         root.add(leaderboardCard, screenLeaderboard);
         setContentPane(root);
+        setContentPane(root);        
+        
     }
 
-    // -------- Navigation --------
-    public void showMenu()        { cards.show(root, screenMenu); }
-    public void showGame()        { cards.show(root, screenGame); }
-    public void showLeaderboard() { cards.show(root, screenLeaderboard); }
+    // Navigation callers
+    public void showMenu() {
+        cards.show(root, screenMenu);
+    }
 
-    // -------- Menu API --------
-    public String getPlayerName()               { return menuCard.getPlayerName(); }
-    public void onStart(ActionListener l)       { menuCard.onStart(l); }
-    public void onLeaderboard(ActionListener l) { menuCard.onLeaderboard(l); }
-    public void onQuit(ActionListener l)        { menuCard.onQuit(l); }
+    public void showGame() {
+        cards.show(root, screenGame);
+    }
 
-    // -------- Game API --------
+    public void showLeaderboard() {
+        cards.show(root, screenLeaderboard);
+    }
+
+    // Menu UI and menu callers
+    public String getPlayerName() {
+        return menuCard.getPlayerName();
+    }
+
+    public void onStart(ActionListener l) {
+        menuCard.onStart(l);
+    }
+
+    public void onLeaderboard(ActionListener l) {
+        menuCard.onLeaderboard(l);
+    }
+
+    public void onQuit(ActionListener l) {
+        menuCard.onQuit(l);
+    }
+
+    // Game UI and game callers
     public void setTierText(String text) {
         gameCard.setTierText(text);
     }
@@ -106,44 +129,84 @@ public class GameUI extends JFrame {
     }
 
 
-    // -------- Leaderboard API --------
-    public void setLeaderboardRows(List<Object[]> rows) { leaderboardCard.setRows(rows); }
-    public void onLeaderboardBack(ActionListener l)     { leaderboardCard.onBack(l); }
+    // Leaderboard UI
+    public void setLeaderboardRows(List<Object[]> rows) {
+        leaderboardCard.setRows(rows);
+    }
+
+    public void onLeaderboardBack(ActionListener l) {
+        leaderboardCard.onBack(l);
+    }
     
     
 
-    // ===================== Inner Panels =====================
+    // Menu UI
 
     private static class MenuCard extends JPanel {
         private final JTextField playerName = new JTextField(20);
         private final JButton startButton = new JButton("Start");
         private final JButton leaderboardButton = new JButton("Leaderboard");
         private final JButton quitButton = new JButton("Quit");
+        
 
         MenuCard() {
+            
             setLayout(new GridBagLayout());
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.insets = new Insets(8, 8, 8, 8);
+            setBackground(colLightBlue);
 
-            gbc.gridx = 0; gbc.gridy = 0;
+            JLabel title = new JLabel("WHO WANTS TO BE A MILLIONAIRE");
+            title.setForeground(colYellow);
+            title.setFont(title.getFont().deriveFont(Font.BOLD, 28f));
+
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.insets = new Insets(12, 12, 12, 12);
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.gridwidth = 2;
+            add(title, gbc);
+
+            gbc.gridwidth = 1;
+            gbc.gridy = 1;
+            gbc.gridx = 0;
             add(new JLabel("Player Name:"), gbc);
+
             gbc.gridx = 1;
             add(playerName, gbc);
 
-            gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2;
+            gbc.gridx = 0;
+            gbc.gridy = 2;
+            gbc.gridwidth = 2;
             add(startButton, gbc);
             gbc.gridy++;
             add(leaderboardButton, gbc);
             gbc.gridy++;
             add(quitButton, gbc);
+
+            
         }
 
-        String getPlayerName() { return playerName.getText().trim(); }
-        void onStart(ActionListener l)       { startButton.addActionListener(l); }
-        void onLeaderboard(ActionListener l) { leaderboardButton.addActionListener(l); }
-        void onQuit(ActionListener l)        { quitButton.addActionListener(l); }
-    }
+        String getPlayerName() {
+            return playerName.getText().trim();
+        }
+        
+        // various buttons
 
+        void onStart(ActionListener l) {
+            startButton.addActionListener(l);
+        }
+
+        void onLeaderboard(ActionListener l) {
+            leaderboardButton.addActionListener(l);
+        }
+
+        void onQuit(ActionListener l) {
+            quitButton.addActionListener(l);
+        }
+        // title for the main screen
+        private final JLabel title = new JLabel("WHO WANTS TO BE A MILLIONAIRE", SwingConstants.CENTER);
+
+    }
+    // this nested class controls the UI for the gameplay
     private static class GameCard extends JPanel {
         private final JLabel tierLabel = new JLabel("Tier");
         private final JTextArea questionArea = new JTextArea(5, 50);
@@ -190,10 +253,18 @@ public class GameUI extends JFrame {
             add(summary, BorderLayout.WEST); // simple placement; controller decides when to show
         }
 
-        void setTierText(String t)            { tierLabel.setText(t != null ? t : ""); }
-        void setQuestionText(String t)        { questionArea.setText(t != null ? t : ""); }
-        void setOption(int idx, String text)  {
-            if (idx >= 0 && idx < answerButtons.length) answerButtons[idx].setText(text != null ? text : "");
+        void setTierText(String t) {
+            tierLabel.setText(t != null ? t : "");
+        }
+
+        void setQuestionText(String t) {
+            questionArea.setText(t != null ? t : "");
+        }
+
+        void setOption(int idx, String text) {
+            if (idx >= 0 && idx < answerButtons.length) {
+                answerButtons[idx].setText(text != null ? text : "");
+            }
         }
         
         // Hide/disable a single option (used by 50/50 and Reveal)
@@ -204,14 +275,14 @@ public class GameUI extends JFrame {
             }
         }
 
-// Enable/disable a single option
+        // Enable/disable a single option
         void enableOption(int idx, boolean on) {
             if (idx >= 0 && idx < answerButtons.length) {
                 answerButtons[idx].setEnabled(on);
             }
         }
 
-// Re-enable all options (call this when a new question loads)
+        // Re-enable all options (call this when a new question loads)
         void resetOptionsEnabled() {
             for (JButton b : answerButtons) {
                 b.setEnabled(true);
@@ -219,7 +290,7 @@ public class GameUI extends JFrame {
         }
 
         
-        
+        // method to conrol how the buttons change with the game UI
         void enableLifeline(String name, boolean on) {
             if (name == null) return;
             if ("50/50".equalsIgnoreCase(name)) fiftyButton.setEnabled(on);
@@ -232,11 +303,19 @@ public class GameUI extends JFrame {
         void onAnswer(int idx, ActionListener l) {
             if (idx >= 0 && idx < answerButtons.length) answerButtons[idx].addActionListener(l);
         }
-        void onFifty(ActionListener l)  { fiftyButton.addActionListener(l); }
-        void onReveal(ActionListener l) { revealButton.addActionListener(l); }
-        void onBack(ActionListener l)   { backButton.addActionListener(l); }
-    }
+        void onFifty(ActionListener l) {
+            fiftyButton.addActionListener(l);
+        }
 
+        void onReveal(ActionListener l) {
+            revealButton.addActionListener(l);
+        }
+
+        void onBack(ActionListener l) {
+            backButton.addActionListener(l);
+        }
+    }
+    // this nested class controls the leaderboard UI
     private static class LeaderboardCard extends JPanel {
         private final JTable table = new JTable();
         private final DefaultTableModel model =

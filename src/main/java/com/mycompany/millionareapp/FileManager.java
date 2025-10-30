@@ -36,14 +36,6 @@ import java.util.Map;
  * 
  */
 
-/**
- * FILE UTILITIES (seeding only).
- * What to change:
- *  - Restrict to generic file helpers used to seed the DB from questions.txt (UTF-8).
- *  - Remove any runtime highscores/savegame responsibilities (replaced by DB).
- *  - Keep paths relative to project (e.g., "data/questions.txt"); avoid absolute paths.
- */
-
 
     public final class FileManager {
 

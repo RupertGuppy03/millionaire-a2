@@ -16,15 +16,6 @@ import java.io.PrintStream;
  * example, confirm() which confirms the user input before executing the next step
  */
 
-/**
- * LEGACY CLI VIEW (not used in GUI path).
- * What to change:
- *  - Mark as legacy/fallback only; do not call from MillionareApp by default.
- *  - Do not add new logic here for A2. Keep for testing or demonstration if needed.
- *  - Add a class-level note in MillionareApp that GUI is the default entry point.
- */
- 
-
 public class ConsoleUI {
     
     private final Scanner in;

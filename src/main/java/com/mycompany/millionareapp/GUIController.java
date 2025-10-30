@@ -24,60 +24,24 @@ import java.util.List;
 /**
  *
  * @author rupertguppy
+ * 
+ * chat GPT helped with 40% of this class
  */
 
 /**
- * GUIController — Screen navigation & gameplay orchestration (MVC controller).
- *
- * PURPOSE
- *  - Bridge the view (GameUI) with the domain (GameEngine) and persistence (GameRepository).
- *  - Own session lifecycle (ensure player → start session → finish session).
- *  - Route all UI events to engine/repo; push state changes back to the UI.
- *
- * WHAT TO IMPLEMENT (step-by-step)
- *  1) start():
- *     - Register all GameUI listeners to call the methods below (beginNewGame, submitAnswer, useFiftyFifty, useReveal, showLeaderboard, backToMenu).
- *     - Default screen: ui.showMenu().
- *
- *  2) beginNewGame(playerName):
- *     - Validate playerName (non-empty); show friendly UI message if invalid.
- *     - playerId = repo.ensurePlayer(playerName)
- *     - sessionId = repo.startSession(playerId); startedAt = Instant.now()
- *     - engine.resetWithQuestions(repo.findAllQuestions()); state.resetForNewGame(playerId, sessionId)
- *     - ui.showGame(); refreshQuestionView()
- *
- *  3) submitAnswer(optionIndex):
- *     - boolean correct = engine.answer(optionIndex)
- *     - If game over: compute winnings & elapsedSeconds; repo.finishSession(sessionId, winnings, elapsedSeconds, Instant.now())
- *                    ui.showSummary("You won $X"); optionally offer Leaderboard button
- *       Else: refreshQuestionView()
- *
- *  4) useFiftyFifty() / useReveal():
- *     - Check GameState flags to ensure one-time use (engine enforces); update UI (disable the used button).
- *     - Call engine.useFiftyFifty()/engine.useReveal(); then repo.recordLifelineUse(sessionId, "50/50"/"REVEAL", currentQuestionId)
- *     - refreshQuestionView()
- *
- *  5) showLeaderboard():
- *     - List<Object[]> rows = repo.topSessions(limit); ui.setLeaderboardRows(rows); ui.showLeaderboard()
- *
- *  6) backToMenu():
- *     - ui.showMenu(); (optionally clear transient UI state)
- *
- *  7) refreshQuestionView():
- *     - Read current question, options, tier/prize, and lifeline flags from engine/state
- *     - ui.setQuestionText(...), ui.setOption(i,...), ui.setTierText(...), ui.enableLifeline("50/50", !used), ui.enableLifeline("REVEAL", !used)
- *
- * THREADING & RELIABILITY
- *  - All UI calls on Swing EDT. Keep DB calls short; if slow, offload to a background worker and then update UI on EDT.
- *  - No SQL or business logic here—only calls to repo/engine and UI updates.
- *  - Handle exceptions gracefully (dialog + safe navigation back to menu); never let the UI crash.
- *
- * MARKING NOTES
- *  - Demonstrates clean separation of concerns (MVC), robust input handling, and lifeline constraints.
- *  - Avoid System.out in production paths; prefer UI messages.
+ * What this class does:
+ *  - Acts as the MVC controller for the Swing app.
+ *  - Connects GameUI (view) to GameEngine (rules) and GameRepository (Derby DB).
+ *  - Starts a game session (ensure player, startSession), advances questions,
+ *    checks answers, and finishes the session (finishSession).
+ *  - Applies lifelines (50/50, Reveal) and updates the UI accordingly.
+ *  - Loads and shows the leaderboard, and handles simple navigation (menu/game).
+ *  - Handles errors with friendly dialogs; no layout or SQL logic lives here.
+ *  - Intended to be called on the Swing EDT.
  */
 
 public class GUIController {
+    // parameters
     private final GameUI ui;
     private GameEngine engine;
     private final GameRepository repo;
@@ -85,13 +49,15 @@ public class GUIController {
     private long playerId = -1L;
     private long sessionId = -1L;
     private Instant startedAt;
-
+    
+    // constructor for the GUI contoller
     public GUIController(GameUI ui, GameEngine engine, GameRepository repo) {
         this.ui = ui;
         this.engine = engine;
         this.repo = repo;
     }
-
+    
+    // start method
     public void start() {
         // Menu listeners
         ui.onStart(e -> beginNewGame(ui.getPlayerName()));
@@ -111,7 +77,7 @@ public class GUIController {
         ui.onLeaderboardBack(e -> backToMenu());
 
     }
-
+    // this method controls how a new game starts once you enter your name
     public void beginNewGame(String playerName) {
         if (playerName == null || playerName.isBlank()) {
             JOptionPane.showMessageDialog(ui, "Please enter a player name.", "Invalid name",
@@ -149,7 +115,8 @@ public class GUIController {
         }
         
     }
-
+    
+    // this method controls how answers are checked
     public void submitAnswer(int optionIndex) {
         if (engine == null || state == null) return;
 
@@ -162,7 +129,7 @@ public class GUIController {
                 try {
                     repo.finishSession(sessionId, winnings, elapsed, Instant.now());
                 } catch (Exception ignore) {
-                    // If finishing fails, still show result; robustness first.
+                    // If finishing fails, still show result
                 }
                 ui.showSummary("Game over! You won $" + winnings);
                 return;
@@ -177,23 +144,24 @@ public class GUIController {
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-
+    
+    // this method controls how the UI gets updated for the 50/50
     public void useFiftyFifty() {
         if (engine == null || state == null) {
             return;
         }
-        int[] hide = engine.useFiftyFiftyLifeLine(state); // <- your engine + strategy do the work
+        int[] hide = engine.useFiftyFiftyLifeLine(state); 
             for (int idx : hide) ui.hideOption(idx);
 
         ui.enableLifeline("50/50", false);
     }
-
+    // this method controls how the UI gets updated for the lifeline
     public void useReveal() {
         if (engine == null || state == null) {
             return;
         }
 
-        int correctIdx = engine.revealCorrectAnswer(state); // engine enforces once-only
+        int correctIdx = engine.revealCorrectAnswer(state);
         if (correctIdx >= 0) {
         // Hide every incorrect option
         for (int i = 0; i < 4; i++) {
@@ -205,13 +173,11 @@ public class GUIController {
         ui.enableLifeline("REVEAL", false);
     }
     }
-
+    // this method controls shows the leaderboard UI with safe fallbacks if the repo isnt active 
     public void showLeaderboard() {
-        // TODO: List<Object[]> rows = repo.topSessions(20); ui.setLeaderboardRows(rows); ui.showLeaderboard();
         try {
             ui.setLeaderboardRows(repo.topSessions(20));
         } catch (UnsupportedOperationException ex) {
-            // Before repo.topSessions is implemented, show empty table gracefully
             ui.setLeaderboardRows(java.util.Collections.emptyList());
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(ui,
@@ -221,11 +187,11 @@ public class GUIController {
         }
         ui.showLeaderboard();
     }
-
+    // this method brings you back to the menu UI
     public void backToMenu() {
         ui.showMenu();
     }
-
+    // this method refreshed the questions each time you use a lifeline or get the answer correct
     private void refreshQuestionView() {
         
         ui.resetOptionsEnabled();

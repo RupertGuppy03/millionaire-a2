@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+// this test class is resposible for ensuring the some key features are working and pass all tests
+
 public class MillionareGameTests {
 
     private QuestionBank bank;
@@ -12,6 +14,7 @@ public class MillionareGameTests {
     private GameState state;
 
     @BeforeEach
+        // setup a set of questions for testing
     void setup() {
         bank = new QuestionBank();
         // three tiny questions
@@ -22,16 +25,17 @@ public class MillionareGameTests {
         engine = new GameEngine(bank);
         state = engine.startGame("Tester");
     }
-
+    // this test ensures that a new game is fresh, while current prize is set to 0
     @Test
-    void startState_isClean() {
+    void startStateTest() {
         assertNotNull(engine.getCurrentQuestion(state), "Q1 does exist");
         assertFalse(engine.gameIsOver(state), "Game will not be over at start");
         assertEquals(0, engine.currentPrizeGet(state), "Prize starts at $0");
     }
-
+    // this tests checks that a correct answer should advance you to the next 
+    // one and update the prize amount
     @Test
-    void correctAnswer_advancesToNextQuestion() {
+    void correctAnswerTest() {
         Question q1 = engine.getCurrentQuestion(state);
         int idx = q1.getCorrectAnswer();
 
@@ -43,9 +47,9 @@ public class MillionareGameTests {
         assertEquals("Q2?", q2.getQuestion());
         assertTrue(engine.currentPrizeGet(state) > 0, "Prize increased after getting a correct answer");
     }
-
+    // this test ensures that getting  wrong answer will end the game
     @Test
-    void wrongAnswer_endsGameAndPrizeStaysAtZero() {
+    void wrongAnswerTest() {
         Question q1 = engine.getCurrentQuestion(state);
         int wrong = (q1.getCorrectAnswer() + 1) % 4;
 
@@ -54,9 +58,9 @@ public class MillionareGameTests {
         assertTrue(engine.gameIsOver(state), "Wrong answer, ending the game");
         assertEquals(0, engine.currentPrizeGet(state), "No prize after losing at Q1");
     }
-
+    // this test checks that the fifty fifty lifeline removes two incorrect options
     @Test
-    void fiftyFifty_returnsTwoIncorrect_andOnlyOnce() {
+    void fiftyFiftyTest() {
         Question q1 = engine.getCurrentQuestion(state);
         int correct = q1.getCorrectAnswer();
 
@@ -69,7 +73,8 @@ public class MillionareGameTests {
         int[] second = engine.useFiftyFiftyLifeLine(state);
         assertEquals(0, second.length, "50/50 can be used only once");
     }
-
+    // this test checks the the reveal answer lifeline gets the correct answer 
+    // based on the correct index of that question
     @Test
     void reveal_returnsCorrectIndex_andOnlyOnce() {
         Question q1 = engine.getCurrentQuestion(state);

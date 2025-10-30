@@ -16,14 +16,6 @@ package com.mycompany.millionareapp;
 
  */
 
-/**
- * DEPRECATED FILE-BASED PERSISTENCE (wraps DB for compatibility).
- * What to change:
- *  - Annotate @Deprecated; internally delegate to GameRepository for sessions/leaderboard.
- *  - Remove/disable file-based highscores/save (DB is the source of truth).
- *  - Prefer calling GameRepository directly from GUIController where practical.
- */
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;

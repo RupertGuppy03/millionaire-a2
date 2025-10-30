@@ -26,14 +26,6 @@ import java.util.List;
  * - Returns a populated QuestionBank in the file order.
  */
  
-/**
- * QUESTION PARSER (seeding only; preserve file order).
- * What to change:
- *  - Expose a static parseQuestions(...) that returns List<Question> for initial DB seeding.
- *  - Validate each record has 4 options and a valid correct index.
- *  - Do NOT use this class at runtime for gameplay once DB is seeded.
- */
-
 public class FileQuestionRepository {
     
     private final Path p;

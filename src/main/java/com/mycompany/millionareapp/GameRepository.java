@@ -11,75 +11,22 @@ import com.mycompany.millionareapp.Question;
 /**
  *
  * @author rupertguppy
+ * 
+ * Chat GPT helped with 40% of this class
+ * 
+ * 
  */
 
 /**
- * GameRepository — Derby Embedded DB façade (single source of truth).
- *
- * PURPOSE
- *  - Own all DB access for questions, players, sessions, and lifeline audit.
- *  - Embedded only (no server). Zero UI/console code here.
- *
- * CONNECTION
- *  - JDBC URL pattern: "jdbc:derby:<dbPath>;create=true"  (e.g., "db/MillionaireDB")
- *  - getConnection(): open a new connection via DriverManager.
- *
- * SCHEMA (to be created in ensureSchema)
- *  - QUESTION(
- *      id BIGINT IDENTITY PK,
- *      stem VARCHAR(1024) NOT NULL,
- *      optA VARCHAR(512) NOT NULL,
- *      optB VARCHAR(512) NOT NULL,
- *      optC VARCHAR(512) NOT NULL,
- *      optD VARCHAR(512) NOT NULL,
- *      correct SMALLINT NOT NULL CHECK (correct BETWEEN 0 AND 3),
- *      category VARCHAR(128) NULL,
- *      difficulty SMALLINT NULL
- *    )
- *  - PLAYER(
- *      id BIGINT IDENTITY PK,
- *      name VARCHAR(128) NOT NULL UNIQUE
- *    )
- *  - GAME_SESSION(
- *      id BIGINT IDENTITY PK,
- *      player_id BIGINT NOT NULL REFERENCES PLAYER(id),
- *      winnings INTEGER DEFAULT 0,
- *      elapsed_seconds BIGINT DEFAULT 0,
- *      started_at TIMESTAMP NOT NULL,
- *      finished_at TIMESTAMP NULL
- *    )
- *  - LIFELINE_USE(
- *      id BIGINT IDENTITY PK,
- *      session_id BIGINT NOT NULL REFERENCES GAME_SESSION(id),
- *      name VARCHAR(32) NOT NULL,           // "50/50" or "REVEAL"
- *      question_id BIGINT NOT NULL REFERENCES QUESTION(id),
- *      used_at TIMESTAMP NOT NULL
- *    )
- *  - Indexing (for leaderboard): index on GAME_SESSION(winnings DESC, finished_at DESC)
- *
- * SEEDING (seedIfEmpty)
- *  - If QUESTION.count == 0, batch insert starter List<Question> (preserve file order).
- *  - Starter source likely from FileQuestionRepository.parseQuestions("data/questions.txt").
- *
- * PUBLIC API (method contracts to implement later — no logic here yet)
- *  - void ensureSchema()
- *  - void seedIfEmpty(List<Question> starter)
- *  - java.sql.Connection getConnection()
- *
- *  - List<Question> findAllQuestions()                     // ordered by id ASC
- *  - long ensurePlayer(String name)                        // fetch-or-insert, return id
- *  - long startSession(long playerId)                      // insert row, return session id
- *  - void finishSession(long sessionId, int winnings,
- *                       long elapsedSeconds, java.time.Instant finishedAt)
- *  - void recordLifelineUse(long sessionId, String lifelineName, long questionId)
- *  - List<Object[]> topSessions(int limit)                 // [playerName, winnings, finished_at]
- *
- * IMPLEMENTATION NOTES
- *  - Use prepared statements; try-with-resources; no static global Connection.
- *  - Keep each method small/clear for marking; throw RuntimeException on fatal SQL errors.
- *  - Typical gameplay must exercise ≥3 reads (e.g., questions, leaderboard) and ≥3 writes
- *    (startSession, finishSession, recordLifelineUse).
- *  - Keep calls short (GUI runs on EDT); heavy work can be batched where appropriate.
+ * What this class does:
+ *  - Talks to an embedded Apache Derby database.
+ * 
+ * this class handles the databse component of my project.
+ * it creates the tables the first time you run the app, so there’s no manual setup.
+ * Lets the game seed questions once (seedIfEmpty), reads questions in order (findAllQuestions),
+ * makes sure a player exists and get their id (ensurePlayer), start/finish a play session 
+ * (startSession, finishSession) and finally loads a simple leaderboard (topSessions)
+ * 
  */
 
 public class GameRepository {
@@ -149,7 +96,7 @@ public class GameRepository {
             throw new IllegalStateException("Schema bootstrap failed", e);
         }
     }
-    
+    // this method fills out the database if the questions are empty
     public int seedIfEmpty(List<Question> starter) {
         if (starter == null || starter.isEmpty()) {
             return 0;
@@ -237,7 +184,7 @@ public class GameRepository {
         }
     }
     
-    // ------- API to implement in later steps -------
+    // this method finds all the questions in the database
     public List<Question> findAllQuestions() {
         try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(
                 "SELECT STEM, OPTA, OPTB, OPTC, OPTD, CORRECT "
@@ -259,7 +206,7 @@ public class GameRepository {
             throw new IllegalStateException("findAllQuestions failed", e);
         }
     }
-
+    // this method ensures that the player name if vlid for a new game to later be updated to the highscores
     public long ensurePlayer(String name) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Player name required");
@@ -267,7 +214,7 @@ public class GameRepository {
         String trimmed = name.trim();
 
         try (Connection cn = getConnection()) {
-            // 1) try select
+            // try select
             try (PreparedStatement sel = cn.prepareStatement(
                     "SELECT ID FROM PLAYER WHERE NAME = ?")) {
                 sel.setString(1, trimmed);
@@ -277,7 +224,7 @@ public class GameRepository {
                     }
                 }
             }
-            // 2) insert
+            // insert
             try (PreparedStatement ins = cn.prepareStatement(
                     "INSERT INTO PLAYER (NAME) VALUES (?)",
                     PreparedStatement.RETURN_GENERATED_KEYS)) {
@@ -295,6 +242,7 @@ public class GameRepository {
         }
 
     }
+    // this method starts a new game and reads the player ID later to be appeneded in the highscores 
     public long startSession(long playerId) {
 
         try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(
@@ -312,6 +260,7 @@ public class GameRepository {
             throw new IllegalStateException("startSession failed", e);
         }
     }
+    // this method handles the game over ready to be appened in the highscores
     public void finishSession(long sessionId, int winnings, long elapsedSeconds, java.time.Instant finishedAt) {
         try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(
                 "UPDATE GAME_SESSION SET WINNINGS=?, ELAPSED_SECONDS=?, FINISHED_AT=? WHERE ID=?")) {
@@ -324,7 +273,7 @@ public class GameRepository {
             throw new IllegalStateException("finishSession failed", e);
         }
     }
-    
+    // this method orders the leaderboard by highscore decending
     public List<Object[]> topSessions(int limit) {
         java.util.ArrayList<Object[]> rows = new java.util.ArrayList<>();
         try (Connection cn = getConnection(); PreparedStatement ps = cn.prepareStatement(
@@ -345,13 +294,8 @@ public class GameRepository {
             return rows;
         } catch (SQLException e) {
             throw new IllegalStateException("topSessions failed", e);
-        }
-        
-        
-    }
-    
-    
-      
+        }       
+    }     
 }
 
 

@@ -16,15 +16,6 @@ package com.mycompany.millionareapp;
   * 
  */
 
-/**
- * LIFELINE STRATEGY: returns exactly two incorrect option indices (deterministic).
- * What to change:
- *  - Ensure the method signature matches engine usage: int[] apply(Question q).
- *  - Make selection deterministic by option order (for reproducible tests).
- *  - Do NOT mutate game state here; GameEngine enforces one-time use via GameState flags.
- */
-
-
 
 
 public class FiftyFiftyLifeLine {

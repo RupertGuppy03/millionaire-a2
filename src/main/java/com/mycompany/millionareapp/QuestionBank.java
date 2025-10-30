@@ -17,14 +17,6 @@ import java.util.List;
   - Uses a bounds check so you get a clear error if you ask for an invalid number.
  */
 
-/**
- * IN-MEMORY QUESTION SOURCE (DB-backed).
- * What to change:
- *  - Remove file coupling; build from List<Question> loaded via GameRepository.
- *  - Provide fromList(List<Question>), get(int index), size(), and (optionally) getByNumber(1-based).
- *  - Preserve original question order as provided by the DB/seed.
- */
-
 
 public class QuestionBank {
     // TODO: private List<Question> questions; + methods above.

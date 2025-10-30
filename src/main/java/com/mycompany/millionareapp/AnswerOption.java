@@ -12,16 +12,6 @@ package com.mycompany.millionareapp;
  * the answer option cannot be empty or null
  */
 
-
-/**
- * VALUE OBJECT (no I/O).
- * What to change:
- *  - No structural changes required for A2.
- *  - Keep fields immutable where possible; provide getters only (no setters) unless used by parser.
- *  - (Optional) Implement equals/hashCode/toString for clean UI/table rendering.
- *  - Ensure indices/names are validated by Question, not here.
- */
-
 public final class AnswerOption {
     
     private final String txt;
